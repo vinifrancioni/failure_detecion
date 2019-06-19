@@ -16,25 +16,12 @@ from tkinter import *
 
 ########################################## C O N F I G U R A Ç Õ E S ###################################################
 
-kernel = np.ones((20,20),np.uint8)                                        # Kernel que define o espaço da morfologia
-path = "imagens2"
+kernel = np.ones((9,9),np.uint8)                                      # Kernel que define o espaço da morfologia
+path = "imagens"
 onlyfiles = [ f for f in listdir(path) if isfile(join(path, f)) ]
 fotos = len(onlyfiles)                                                  # Número de fotos a serem analisadas ou pode ser substituido por um numero inteiro
 
-matriz = np.empty(len(onlyfiles), dtype = object)                       # Cria as matrizes que armazenam as imagens
-image_import = np.empty(len(onlyfiles), dtype = object)
-image_import = np.empty(len(onlyfiles), dtype = object)
-imagem_hist = np.empty(len(onlyfiles), dtype = object)
-imagem = np.empty(len(onlyfiles), dtype = object)
-res_blue = np.empty(len(onlyfiles), dtype = object)
-res_red = np.empty(len(onlyfiles), dtype = object)
-res_green = np.empty(len(onlyfiles), dtype = object)
-res_mask = np.empty(len(onlyfiles), dtype = object)
-hist_blue = np.empty(len(onlyfiles), dtype = object)
-hist_red = np.empty(len(onlyfiles), dtype = object)
-hist_green = np.empty(len(onlyfiles), dtype = object)
-
-lower_blue = np.array([110, 130, 50])                                    # Define o limitante superior para a máscara
+lower_blue = np.array([110, 130, 50])                                   # Define o limitante superior para a máscara
 upper_blue = np.array([150, 230, 230])                                  # Define o limitante inferior para a máscara
 
 lower_red = np.array([150, 70, 70])
@@ -46,14 +33,28 @@ upper_green = np.array([90, 210, 210])
 ############################################# I M P O R T A R ##########################################################
 
 
-for n in range(0, len(onlyfiles)):
-
-  image_import[n] = cv2.imread(join(path, onlyfiles[n]))
-  image_import[n] = cv2.resize(image_import[n], (480, 360))
-  imagem[n] = cv2.cvtColor(image_import[n], cv2.COLOR_BGR2HSV)                # Muda o esquema de cores de BGR para HSV
-
+image_import = np.empty(len(onlyfiles), dtype=object)
+imagem_hist = np.empty(len(onlyfiles), dtype=object)
+imagem = np.empty(len(onlyfiles), dtype=object)
+res_blue = np.empty(len(onlyfiles), dtype=object)
+res_red = np.empty(len(onlyfiles), dtype=object)
+res_green = np.empty(len(onlyfiles), dtype=object)
+res_mask = np.empty(len(onlyfiles), dtype=object)
+hist_blue = np.empty(len(onlyfiles), dtype=object)
+hist_red = np.empty(len(onlyfiles), dtype=object)
+hist_green = np.empty(len(onlyfiles), dtype=object)
 
 ############################################### L O O P S ##############################################################
+
+def importar ():
+
+    for n in range(0, len(onlyfiles)):
+
+      image_import[n] = cv2.imread(join(path, onlyfiles[n]))
+      image_import[n] = cv2.resize(image_import[n], (480, 360))
+      imagem[n] = cv2.cvtColor(image_import[n], cv2.COLOR_BGR2HSV)                # Muda o esquema de cores de BGR para HSV
+
+    return;
 
 def ajustes ():                                                         # Aplicação de redução de Sal e Pimenta
 
@@ -62,6 +63,7 @@ def ajustes ():                                                         # Aplica
         imagem[n] = cv2.medianBlur(imagem[n], 3)
 
         cv2.imshow("SDF", imagem[n])
+        cv2.waitKey()
 
     return;
 
@@ -100,7 +102,6 @@ def filtros ():
     plt.show()
 
     return;
-
 
 def ruido():                                                            # Faz a aplicação de ruído sal e pimenta
 
@@ -143,6 +144,20 @@ def sem_filtro():
 
     return;
 
+def matrizes ():                                                        # Zera todas as matrizes, util na troca de botões
+
+    image_import = np.empty(len(onlyfiles), dtype = object)
+    imagem_hist = np.empty(len(onlyfiles), dtype = object)
+    imagem = np.empty(len(onlyfiles), dtype = object)
+    res_blue = np.empty(len(onlyfiles), dtype = object)
+    res_red = np.empty(len(onlyfiles), dtype = object)
+    res_green = np.empty(len(onlyfiles), dtype = object)
+    res_mask = np.empty(len(onlyfiles), dtype = object)
+    hist_blue = np.empty(len(onlyfiles), dtype = object)
+    hist_red = np.empty(len(onlyfiles), dtype = object)
+    hist_green = np.empty(len(onlyfiles), dtype = object)
+
+    return;
 
 ############################################# U S E R   I N T E R F A C E ##############################################
 
@@ -215,14 +230,20 @@ class Janela:
 
     # Faz as chamadas de função conforme o botão pressionado
     def button01(self,event):
+        matrizes()
+        importar()
         filtros()
 
     def button02(self,event):
+        matrizes()
+        importar()
         ruido()
         ajustes()
         filtros()
 
     def button03(self, event):
+        matrizes()
+        importar()
         ruido()
         sem_filtro()
 
