@@ -60,6 +60,7 @@ def ajustes ():                                                         # Aplica
     for n in range(0, len(onlyfiles)):
 
         imagem[n] = cv2.medianBlur(imagem[n], 3)
+
         cv2.imshow("SDF", imagem[n])
 
     return;
