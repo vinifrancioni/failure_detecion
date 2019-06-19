@@ -28,14 +28,13 @@ lower_red = np.array([150, 70, 70])
 upper_red = np.array([200, 210, 210])
 
 lower_green = np.array([20, 80, 80])
-upper_green = np.array([90, 210, 210])
+upper_green = np.array([90, 210, 180])
 
 ############################################# I M P O R T A R ##########################################################
 
-
 image_import = np.empty(len(onlyfiles), dtype=object)
 imagem_hist = np.empty(len(onlyfiles), dtype=object)
-imagem = np.empty(len(onlyfiles), dtype=object)
+imagem_hsv = np.empty(len(onlyfiles), dtype=object)
 res_blue = np.empty(len(onlyfiles), dtype=object)
 res_red = np.empty(len(onlyfiles), dtype=object)
 res_green = np.empty(len(onlyfiles), dtype=object)
@@ -43,6 +42,9 @@ res_mask = np.empty(len(onlyfiles), dtype=object)
 hist_blue = np.empty(len(onlyfiles), dtype=object)
 hist_red = np.empty(len(onlyfiles), dtype=object)
 hist_green = np.empty(len(onlyfiles), dtype=object)
+imagem_blur = np.empty(len(onlyfiles), dtype=object)
+imagem_ruido = np.empty(len(onlyfiles), dtype=object)
+imagem_blur_hsv = np.empty(len(onlyfiles), dtype=object)
 
 ############################################### L O O P S ##############################################################
 
@@ -52,20 +54,10 @@ def importar ():
 
       image_import[n] = cv2.imread(join(path, onlyfiles[n]))
       image_import[n] = cv2.resize(image_import[n], (480, 360))
-      imagem[n] = cv2.cvtColor(image_import[n], cv2.COLOR_BGR2HSV)                # Muda o esquema de cores de BGR para HSV
+      imagem_hsv[n] = cv2.cvtColor(image_import[n], cv2.COLOR_BGR2HSV)                # Muda o esquema de cores de BGR para HSV
 
     return;
 
-def ajustes ():                                                         # Aplicação de redução de Sal e Pimenta
-
-    for n in range(0, len(onlyfiles)):
-
-        imagem[n] = cv2.medianBlur(imagem[n], 3)
-
-        cv2.imshow("SDF", imagem[n])
-        cv2.waitKey()
-
-    return;
 
 def filtros ():
 
@@ -73,17 +65,17 @@ def filtros ():
 
     while n < fotos:
 
-        mask_blue = cv2.inRange(imagem[n], lower_blue, upper_blue)
+        mask_blue = cv2.inRange(imagem_hsv[n], lower_blue, upper_blue)
         mask_blue = cv2.morphologyEx(mask_blue, cv2.MORPH_CLOSE, kernel)# Faz uma morphologia para retirar os grãos da máscara
         #hist_blue[n] = cv2.calcHist([mask_blue], [0, 1], None, [180, 256], [5, 180, 5, 256])
         res_blue[n] = cv2.bitwise_and(image_import[n], image_import[n], mask = mask_blue)
 
-        mask_red = cv2.inRange(imagem[n], lower_red, upper_red)
+        mask_red = cv2.inRange(imagem_hsv[n], lower_red, upper_red)
         mask_red = cv2.morphologyEx(mask_red, cv2.MORPH_CLOSE,kernel)
         #hist_red[n] = cv2.calcHist([mask_red], [0], None, [256], [1, 256])
         res_red[n] = cv2.bitwise_and(image_import[n], image_import[n], mask = mask_red)
 
-        mask_green = cv2.inRange(imagem[n], lower_green, upper_green)   # Essa máscara reconhece verde e amarelo ao mesmo tempo
+        mask_green = cv2.inRange(imagem_hsv[n], lower_green, upper_green)   # Essa máscara reconhece verde e amarelo ao mesmo tempo
         mask_green = cv2.morphologyEx(mask_green, cv2.MORPH_CLOSE,kernel)
         #hist_green[n] = cv2.calcHist([mask_green], [0], None, [256], [1, 256])
         res_green[n] = cv2.bitwise_and(image_import[n], image_import[n], mask = mask_green)
@@ -109,7 +101,7 @@ def ruido():                                                            # Faz a 
 
     while n < fotos:
 
-        input = cv2.cvtColor(imagem[n], cv2.COLOR_HSV2RGB)              # Converção facilita o processo
+        input = cv2.cvtColor(imagem_hsv[n], cv2.COLOR_HSV2RGB)              # Converção facilita o processo
         output = np.zeros(input.shape, np.uint8)                        # Cria matriz igual a imagem para os dados do ruido
         p = 0.05                                                        # Quantidade de ruído desejado
 
@@ -123,11 +115,25 @@ def ruido():                                                            # Faz a 
                 else:
                         output[i][j] = input[i][j]
 
-        imagem[n] = output
-        imagem[n] = cv2.cvtColor(imagem[n], cv2.COLOR_RGB2BGR)          # Converte e imagem para BGR
+        imagem_ruido[n] = output
+        imagem_ruido[n] = cv2.cvtColor(imagem_ruido[n], cv2.COLOR_RGB2BGR)          # Converte e imagem para BGR
+
+        #cv2.imshow("Com ruido", imagem_ruido[n])
+        #cv2.waitKey()
 
         n = n + 1
 
+    return;
+
+def ajustes ():                                                         # Aplicação de redução de Sal e Pimenta
+
+    for n in range(0, len(onlyfiles)):
+
+        imagem_blur[n] = cv2.medianBlur(imagem_ruido[n], 3)
+        imagem_hsv[n] = cv2.cvtColor(imagem_blur[n], cv2.COLOR_BGR2HSV)
+
+        #cv2.imshow("Depois", imagem_blur[n])
+        #cv2.waitKey()
 
     return;
 
@@ -137,7 +143,7 @@ def sem_filtro():
 
     while n < fotos:
 
-        cv2.imshow('Sem filtro', imagem[n])
+        cv2.imshow('Sem filtro', imagem_ruido[n])
         cv2.waitKey()
 
         n = n + 1
@@ -146,16 +152,19 @@ def sem_filtro():
 
 def matrizes ():                                                        # Zera todas as matrizes, util na troca de botões
 
-    image_import = np.empty(len(onlyfiles), dtype = object)
-    imagem_hist = np.empty(len(onlyfiles), dtype = object)
-    imagem = np.empty(len(onlyfiles), dtype = object)
-    res_blue = np.empty(len(onlyfiles), dtype = object)
-    res_red = np.empty(len(onlyfiles), dtype = object)
-    res_green = np.empty(len(onlyfiles), dtype = object)
-    res_mask = np.empty(len(onlyfiles), dtype = object)
-    hist_blue = np.empty(len(onlyfiles), dtype = object)
-    hist_red = np.empty(len(onlyfiles), dtype = object)
-    hist_green = np.empty(len(onlyfiles), dtype = object)
+    image_import = np.empty(len(onlyfiles), dtype=object)
+    imagem_hist = np.empty(len(onlyfiles), dtype=object)
+    imagem_hsv = np.empty(len(onlyfiles), dtype=object)
+    res_blue = np.empty(len(onlyfiles), dtype=object)
+    res_red = np.empty(len(onlyfiles), dtype=object)
+    res_green = np.empty(len(onlyfiles), dtype=object)
+    res_mask = np.empty(len(onlyfiles), dtype=object)
+    hist_blue = np.empty(len(onlyfiles), dtype=object)
+    hist_red = np.empty(len(onlyfiles), dtype=object)
+    hist_green = np.empty(len(onlyfiles), dtype=object)
+    imagem_blur = np.empty(len(onlyfiles), dtype=object)
+    imagem_ruido = np.empty(len(onlyfiles), dtype=object)
+    imagem_blue_hsv = np.empty(len(onlyfiles), dtype=object)
 
     return;
 
