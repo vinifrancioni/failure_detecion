@@ -5,34 +5,38 @@ Alunos: Vinicius Francioni
         Kaue Silva Marcondes
 
 '''
-
-import random
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-from os import listdir
-from os.path import isfile, join
-from tkinter import *
+                                                                        # Usado para:
+import random                                                           # Números aleatórios do Sal e Pimenta
+import cv2                                                              # Processamento da Imagem
+import numpy as np                                                      # Trabalho matemático
+import matplotlib.pyplot as plt                                         # Para os plots e gráficos
+from os import listdir                                                  # Gerenciamento do diretório
+from os.path import isfile, join                                        # Leitura dos arquivos
+from tkinter import *                                                   # Interface gráfica
 
 ########################################## C O N F I G U R A Ç Õ E S ###################################################
 
-kernel = np.ones((9,9),np.uint8)                                      # Kernel que define o espaço da morfologia
+kernel = np.ones((9,9),np.uint8)                                        # Kernel que define o espaço da morfologia
 path = "imagens"
-onlyfiles = [ f for f in listdir(path) if isfile(join(path, f)) ]
-fotos = len(onlyfiles)                                                  # Número de fotos a serem analisadas ou pode ser substituido por um numero inteiro
+onlyfiles = [ f for f in listdir(path) if isfile(join(path, f)) ]       # Faz a leitura dos arquivos da pasta
+
+fotos = len(onlyfiles)                                                  # Número de fotos a serem analisadas // Pode ser
+                                                                        # substituido por um numero inteiro
 
 lower_blue = np.array([110, 130, 50])                                   # Define o limitante superior para a máscara
 upper_blue = np.array([150, 230, 230])                                  # Define o limitante inferior para a máscara
 
-lower_red = np.array([150, 70, 70])
-upper_red = np.array([200, 210, 210])
+lower_red = np.array([150, 70, 70])                                     # Define o limitante superior para a máscara
+upper_red = np.array([200, 210, 210])                                   # Define o limitante inferior para a máscara
 
-lower_green = np.array([20, 80, 80])
-upper_green = np.array([90, 210, 180])
+lower_green = np.array([20, 80, 80])                                    # Define o limitante superior para a máscara
+upper_green = np.array([90, 210, 180])                                  # Define o limitante inferior para a máscara
 
 ############################################# I M P O R T A R ##########################################################
 
-image_import = np.empty(len(onlyfiles), dtype=object)
+# Cria matrizes vazias com base na quantidade de arquivos para armazenar as fotos
+
+imagem_import = np.empty(len(onlyfiles), dtype=object)
 imagem_hist = np.empty(len(onlyfiles), dtype=object)
 imagem_hsv = np.empty(len(onlyfiles), dtype=object)
 res_blue = np.empty(len(onlyfiles), dtype=object)
@@ -52,9 +56,10 @@ def importar ():
 
     for n in range(0, len(onlyfiles)):
 
-      image_import[n] = cv2.imread(join(path, onlyfiles[n]))
-      image_import[n] = cv2.resize(image_import[n], (480, 360))
-      imagem_hsv[n] = cv2.cvtColor(image_import[n], cv2.COLOR_BGR2HSV)                # Muda o esquema de cores de BGR para HSV
+      imagem_import[n] = cv2.imread(join(path, onlyfiles[n]))
+      imagem_import[n] = cv2.resize(imagem_import[n], (480, 360))
+      imagem_hsv[n] = cv2.cvtColor(imagem_import[n], cv2.COLOR_BGR2HSV)
+      # Muda o esquema de cores de BGR para HSV
 
     return;
 
@@ -66,22 +71,25 @@ def filtros ():
     while n < fotos:
 
         mask_blue = cv2.inRange(imagem_hsv[n], lower_blue, upper_blue)
-        mask_blue = cv2.morphologyEx(mask_blue, cv2.MORPH_CLOSE, kernel)# Faz uma morphologia para retirar os grãos da máscara
+        mask_blue = cv2.morphologyEx(mask_blue, cv2.MORPH_CLOSE, kernel)
+        # Morphologia para retirar os grãos da máscara
         #hist_blue[n] = cv2.calcHist([mask_blue], [0, 1], None, [180, 256], [5, 180, 5, 256])
-        res_blue[n] = cv2.bitwise_and(image_import[n], image_import[n], mask = mask_blue)
+        res_blue[n] = cv2.bitwise_and(imagem_import[n], imagem_import[n], mask = mask_blue)
 
         mask_red = cv2.inRange(imagem_hsv[n], lower_red, upper_red)
         mask_red = cv2.morphologyEx(mask_red, cv2.MORPH_CLOSE,kernel)
         #hist_red[n] = cv2.calcHist([mask_red], [0], None, [256], [1, 256])
-        res_red[n] = cv2.bitwise_and(image_import[n], image_import[n], mask = mask_red)
+        res_red[n] = cv2.bitwise_and(imagem_import[n], imagem_import[n], mask = mask_red)
 
-        mask_green = cv2.inRange(imagem_hsv[n], lower_green, upper_green)   # Essa máscara reconhece verde e amarelo ao mesmo tempo
+        mask_green = cv2.inRange(imagem_hsv[n], lower_green, upper_green)
+        # Máscara única para verde e amarelo
         mask_green = cv2.morphologyEx(mask_green, cv2.MORPH_CLOSE,kernel)
         #hist_green[n] = cv2.calcHist([mask_green], [0], None, [256], [1, 256])
-        res_green[n] = cv2.bitwise_and(image_import[n], image_import[n], mask = mask_green)
+        res_green[n] = cv2.bitwise_and(imagem_import[n], imagem_import[n], mask = mask_green)
 
         res_mask[n] = np.hstack((res_red[n], res_blue[n]))
-        res_mask[n] = np.hstack((res_mask[n], res_green[n]))            # Faz a junção das imagens, só para exibição
+        res_mask[n] = np.hstack((res_mask[n], res_green[n]))
+        # Faz a junção das imagens, só para exibição
 
         cv2.imshow('Máscaras', res_mask[n])
         cv2.waitKey()
@@ -101,7 +109,7 @@ def ruido():                                                            # Faz a 
 
     while n < fotos:
 
-        input = cv2.cvtColor(imagem_hsv[n], cv2.COLOR_HSV2RGB)              # Converção facilita o processo
+        input = cv2.cvtColor(imagem_hsv[n], cv2.COLOR_HSV2RGB)          # Converção facilita o processo
         output = np.zeros(input.shape, np.uint8)                        # Cria matriz igual a imagem para os dados do ruido
         p = 0.05                                                        # Quantidade de ruído desejado
 
@@ -118,8 +126,8 @@ def ruido():                                                            # Faz a 
         imagem_ruido[n] = output
         imagem_ruido[n] = cv2.cvtColor(imagem_ruido[n], cv2.COLOR_RGB2BGR)          # Converte e imagem para BGR
 
-        #cv2.imshow("Com ruido", imagem_ruido[n])
-        #cv2.waitKey()
+        #cv2.imshow("Com ruido", imagem_ruido[n])                       # Pode ser utilizado para provar que a imagem
+        #cv2.waitKey()                                                  # nesse loop está com ruído
 
         n = n + 1
 
@@ -132,12 +140,12 @@ def ajustes ():                                                         # Aplica
         imagem_blur[n] = cv2.medianBlur(imagem_ruido[n], 3)
         imagem_hsv[n] = cv2.cvtColor(imagem_blur[n], cv2.COLOR_BGR2HSV)
 
-        #cv2.imshow("Depois", imagem_blur[n])
-        #cv2.waitKey()
+        #cv2.imshow("Depois", imagem_blur[n])                           # Pode ser utilizado para ver o resultado
+        #cv2.waitKey()                                                  # do efeito Blur
 
     return;
 
-def sem_filtro():
+def sem_filtro():                                                       # Esse simplesmente mostra as imagens com ruído
 
     n = 0
 
@@ -150,7 +158,7 @@ def sem_filtro():
 
     return;
 
-def matrizes ():                                                        # Zera todas as matrizes, util na troca de botões
+def matrizes ():                                                        # Zera todas as matrizes,para a troca de botões
 
     image_import = np.empty(len(onlyfiles), dtype=object)
     imagem_hist = np.empty(len(onlyfiles), dtype=object)
